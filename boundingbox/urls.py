@@ -1,17 +1,9 @@
 from django.conf.urls import patterns, include, url
-
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+from django.views.generic.simple import direct_to_template
+from bbox import views
 
 urlpatterns = patterns('',
-    # Examples:
-    # url(r'^$', 'boundingbox.views.home', name='home'),
-    # url(r'^boundingbox/', include('boundingbox.foo.urls')),
-
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
+#                       url( r'^$', views.addPoints, name="add_points" ),
+                       url( r'^$', direct_to_template, {'template':'points.html'} ),
+                       url( r'^search/%', views.searchPoints, name="search_points" ),
 )

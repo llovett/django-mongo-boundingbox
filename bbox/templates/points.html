@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block scripts %}
+<script type="text/javascript">
+var endPoint1, endPoint2, rectangle, map;
+function initialize() {
+    var latLng = new google.maps.LatLng(-34.397, 150.644);
+    var mapOptions = {
+	center: latLng,
+	zoom: 8,
+	mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+    endPoint1 = new google.maps.Marker( {
+	map: map,
+	position: new google.maps.LatLng(-35,150),
+	draggable: true,
+	title: "Drag me!"
+    } );
+    endPoint2 = new google.maps.Marker( {
+	map: map,
+	position: new google.maps.LatLng(-34,151),
+	draggable: true,
+	title: "Drag me!"
+    } );
+
+    // Callbacks for moving rectangle
+    google.maps.event.addListener( endPoint1, 'drag', redraw );
+    google.maps.event.addListener( endPoint2, 'drag', redraw );
+    // Callback for clicking on the map
+    google.maps.event.addListener( map, 'click', addPoint );
+
+    // Create a rectangle overlay and place it on the map
+    rectangle = new google.maps.Rectangle( {
+	map: map
+    } );
+
+    // Callback for clicking on the rectangle overlay
+    google.maps.event.addListener( rectangle, 'click', addPoint );
+
+    redraw();
+}
+
+function addPoint( mouseEvent ) {
+    var marker = new google.maps.Marker( {
+    	position: mouseEvent.latLng,
+    	map: map,
+    	title: "point you made"
+    } );
+}
+
+function redraw() {
+    var latLngBounds = new google.maps.LatLngBounds(
+	endPoint1.getPosition(),
+	endPoint2.getPosition()
+    );
+    rectangle.setBounds( latLngBounds );
+}
+$(document).ready( initialize );
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="map_canvas"></div>
+{% endblock %}

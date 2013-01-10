@@ -1,3 +1,9 @@
-from django.db import models
+import mongoengine as mdb
 
-# Create your models here.
+class Point( mdb.Document ):
+    position = mdb.GeoPointField()
+    title = mdb.StringField( max_length=500 )
+
+    def __unicode__( self ):
+        return self.title
+
