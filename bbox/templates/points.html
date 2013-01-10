@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block scripts %}
 <script type="text/javascript">
-var endPoint1, endPoint2, rectangle, map;
+var endPoint1, endPoint2, rectangle, map, markersArray = [];
 function initialize() {
     var latLng = new google.maps.LatLng(-34.397, 150.644);
     var mapOptions = {
@@ -24,8 +24,8 @@ function initialize() {
     } );
 
     // Callbacks for moving rectangle
-    google.maps.event.addListener( endPoint1, 'drag', redraw );
-    google.maps.event.addListener( endPoint2, 'drag', redraw );
+    google.maps.event.addListener( endPoint1, 'dragend', redraw );
+    google.maps.event.addListener( endPoint2, 'dragend', redraw );
     // Callback for clicking on the map
     google.maps.event.addListener( map, 'click', addPoint );
 
@@ -47,13 +47,26 @@ function addPoint( mouseEvent ) {
 	data: { 'lat': mouseEvent.latLng.lat(),
 		'lng': mouseEvent.latLng.lng() },
 	success: function() {
-	    var marker = new google.maps.Marker( {
-    		position: mouseEvent.latLng,
-    		map: map,
-    		title: "point you made"
-	    } );
+	    displayPoint( mouseEvent.latLng );
 	}
     } );
+}
+
+function displayPoint( latLng ) {
+    var marker = new google.maps.Marker( {
+    	position: latLng,
+    	map: map,
+    	title: "point you made"
+    } );
+    markersArray.push( marker );
+}
+
+function clearMarkers() {
+    for ( var i=0; i<markersArray.length; i++ ) {
+	markersArray[i].setMap( null );
+	markersArray[i].setVisible( false );
+    }
+    markersArray = new Array();
 }
 
 function redraw() {
@@ -62,6 +75,22 @@ function redraw() {
 	endPoint2.getPosition()
     );
     rectangle.setBounds( latLngBounds );
+
+    $.ajax( {
+	type: "GET",
+	url: "/point/search/",
+	data: { 'lat1': endPoint1.getPosition().lat(),
+		'lng1': endPoint1.getPosition().lng(),
+		'lat2': endPoint2.getPosition().lat(),
+		'lng2': endPoint2.getPosition().lng() },
+	success: function( data ) {
+	    clearMarkers();
+	    for ( var i=0; i<data.length; i++ ) {
+		displayPoint( new google.maps.LatLng(data[i][0], data[i][1]) );
+	    }
+	}
+    } );
+	    
 }
 
 function getCSRF() {
