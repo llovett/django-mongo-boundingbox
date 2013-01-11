@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block scripts %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/RouteBoxer.js"></script>
 <script type="text/javascript">
 var endPoint1, endPoint2, rectangle, map, markersArray = [];
+var routeBoxes;
+var directionService, directionsRenderer, routeBoxer;
+var routeBounds;
+
 function initialize() {
     var latLng = new google.maps.LatLng(-34.397, 150.644);
     var mapOptions = {
@@ -37,6 +42,17 @@ function initialize() {
     // Callback for clicking on the rectangle overlay
     google.maps.event.addListener( rectangle, 'click', addPoint );
 
+    // Click handler for the directions "submit" button
+    $("#submit").click( function( event ) {
+	event.preventDefault();
+	route();
+    } );
+
+    // Setup directions/boxing utilities
+    directionService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer( {map: map} );
+    routeBoxer = new RouteBoxer();
+
     redraw();
 }
 
@@ -69,6 +85,16 @@ function clearMarkers() {
     markersArray = new Array();
 }
 
+function clearBoxes() {
+    if ( routeBoxes != null ) {
+	for ( var i=0; i<routeBoxes.length; i++ ) {
+	    routeBoxes[i].setMap( null );
+	    routeBoxes[i].setVisible( false );
+	}
+    }
+    routeBoxes = null;
+}
+
 function redraw() {
     var latLngBounds = new google.maps.LatLngBounds(
 	endPoint1.getPosition(),
@@ -91,6 +117,75 @@ function redraw() {
 	}
     } );
 	    
+}
+
+function route() {
+    // Clear all previous boxes
+    clearBoxes();
+
+    // Bounding-box encapsulation distance
+    var distance = $("#distance").val();
+    
+    // The request to be sent to Google for directions
+    var request = {
+	origin: $("#from").val(),
+	destination: $("#to").val(),
+	travelMode: google.maps.DirectionsTravelMode.DRIVING
+    };
+
+    // Make the request
+    directionService.route( request, function( result, status ) {
+	$("#status").empty();
+	if ( status == google.maps.DirectionsStatus.OK ) {
+	    directionsRenderer.setDirections( result );
+
+	    // Box around the overview path of the first route
+	    var path = result.routes[0].overview_path;
+	    var boxes = routeBoxer.box( path, distance );
+
+	    // Convert boxes to JSON, to make AJAX request to server,
+	    // getting the overview polygon
+	    $.ajax( {
+		type: "POST",
+		url: "/point/search/",
+		data: boxesToJSON(boxes),
+		dataType: "text",
+		success: function() {
+		    $("#status").text("got overview rectangle.");
+		}
+	    } );
+
+	    // Draw boxes
+	    drawBoxes( boxes );
+	} else {
+	    $("#status").text("Directions query failed: "+status);
+	}
+    } );
+}
+
+function boxesToJSON( boxes ) {
+    var box_list = [];
+    for ( var i=0; i<boxes.length; i++ ) {
+	var ne = boxes[i].getNorthEast();
+	var sw = boxes[i].getSouthWest();
+
+	box_list[i*4] = ne.lat();
+	box_list[i*4 + 1] = ne.lng();
+	box_list[i*4 + 2] = sw.lat();
+	box_list[i*4 + 3] = sw.lng();
+    }
+
+    return JSON.stringify( { "rectangles" : box_list } );
+}
+
+function drawBoxes( boxes ) {
+    routeBoxes = new Array( boxes.length );
+    for ( var i=0; i<boxes.length; i++ ) {
+	routeBoxes[i] = new google.maps.Rectangle({
+	    bounds: boxes[i],
+	    map: map
+	});
+    }
 }
 
 function getCSRF() {
@@ -132,4 +227,13 @@ $(document).ready( initialize );
 
 {% block content %}
 <div id="map_canvas"></div>
+<div id="controls">
+  Box within at least <input type="text" id="distance" value="10" size="2" />km
+  of the route<br />
+  from <input type="text" id="from" value="Denver" /> to
+  <input type="text" id="to" value="San Francisco" />
+  <input type="submit" value="submit" id="submit" />
+</div>
+<div id="status">
+</div>
 {% endblock %}
