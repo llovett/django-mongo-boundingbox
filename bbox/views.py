@@ -23,14 +23,7 @@ def searchPoints( request ):
         # Make a Rectangle out of the width/height of a bounding box
         theRect = Rectangle( abs(rectangles[i+1] - rectangles[i+3]),
                              abs(rectangles[i] - rectangles[i+2]) )
-
-        # Translate the rectangle by the SW corner of the box
-        theRect.shift( rectangles[i+2], rectangles[i+3] )
-
-        # DOUBLE the size of the rect!???? This really shouldn't be necessary
-        # theRect.scale(2,2)
-
-        # Union the bounding box
+        theRect.shift( rectangles[i+3], rectangles[i+2] )
         bboxArea = bboxArea + theRect if bboxArea else theRect
 
     # For debugging only --- did it really work??
