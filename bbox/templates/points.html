@@ -2,7 +2,7 @@
 {% block scripts %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/RouteBoxer.js"></script>
 <script type="text/javascript">
-var endPoint1, endPoint2, rectangle, map, markersArray = [];
+var map, markersArray = [];
 var routeBoxes;
 var directionService, directionsRenderer, routeBoxer;
 var routeBounds;
@@ -15,32 +15,9 @@ function initialize() {
 	mapTypeId: google.maps.MapTypeId.ROADMAP
     };
     map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-    endPoint1 = new google.maps.Marker( {
-	map: map,
-	position: new google.maps.LatLng(-35,150),
-	draggable: true,
-	title: "Drag me!"
-    } );
-    endPoint2 = new google.maps.Marker( {
-	map: map,
-	position: new google.maps.LatLng(-34,151),
-	draggable: true,
-	title: "Drag me!"
-    } );
 
-    // Callbacks for moving rectangle
-    google.maps.event.addListener( endPoint1, 'dragend', redraw );
-    google.maps.event.addListener( endPoint2, 'dragend', redraw );
     // Callback for clicking on the map
     google.maps.event.addListener( map, 'click', addPoint );
-
-    // Create a rectangle overlay and place it on the map
-    rectangle = new google.maps.Rectangle( {
-	map: map
-    } );
-
-    // Callback for clicking on the rectangle overlay
-    google.maps.event.addListener( rectangle, 'click', addPoint );
 
     // Click handler for the directions "submit" button
     $("#submit").click( function( event ) {
@@ -150,13 +127,19 @@ function route() {
 		url: "/point/search/",
 		data: boxesToJSON(boxes),
 		dataType: "text",
-		success: function() {
+		success: function( data ) {
 		    $("#status").text("got overview rectangle.");
+
+		    // Draw boxes
+		    drawBoxes( boxes );
+
+		    // Display markers that fit within the union of the boxes
+		    clearMarkers();
+		    for ( var i=0; i<data.length; i++ ) {
+			displayPoint( new google.maps.LatLng(data[i][0], data[i][1]) );
+		    }
 		}
 	    } );
-
-	    // Draw boxes
-	    drawBoxes( boxes );
 	} else {
 	    $("#status").text("Directions query failed: "+status);
 	}
@@ -228,11 +211,14 @@ $(document).ready( initialize );
 {% block content %}
 <div id="map_canvas"></div>
 <div id="controls">
-  Box within at least <input type="text" id="distance" value="10" size="2" />km
-  of the route<br />
-  from <input type="text" id="from" value="Denver" /> to
-  <input type="text" id="to" value="San Francisco" />
-  <input type="submit" value="submit" id="submit" />
+  <form action="POST" target="#" >
+    {% csrf_token %}
+    Box within at least <input type="text" id="distance" value="10" size="2" />km
+of the route<br />
+    from <input type="text" id="from" value="Denver" /> to
+    <input type="text" id="to" value="San Francisco" />
+    <input type="submit" value="submit" id="submit" />
+  </form>
 </div>
 <div id="status">
 </div>

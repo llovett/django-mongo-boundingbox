@@ -29,5 +29,5 @@ def searchPoints( request ):
 
     # TODO: pull objects out of database using bboxArea
     points = [p.position for p in Point.objects( position__within_polygon=bboxArea )]
-
+    
     return HttpResponse( json.dumps(points), mimetype="application/json" )
