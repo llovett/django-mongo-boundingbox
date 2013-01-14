@@ -1,2 +1,5 @@
 *.pyc
 .swp_emacs
+processing
+data
+logs

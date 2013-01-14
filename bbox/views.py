@@ -25,10 +25,8 @@ def searchPoints( request ):
         bboxArea = bboxArea + theRect if bboxArea else theRect
 
     bboxArea = [list(t) for t in bboxArea.contour( 0 )]
-    stderr.write( str(bboxArea) )
 
     # TODO: pull objects out of database using bboxArea
-    points = [p.position for p in Point.objects( position__within_polygon=bboxArea )]
-    stderr.write("points returned: "+str(points))
-    
+    points = { "points" : [p.position for p in Point.objects( position__within_polygon=bboxArea )] }
+
     return HttpResponse( json.dumps(points), mimetype="application/json" )

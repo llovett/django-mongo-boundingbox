@@ -106,15 +106,18 @@ function route() {
 		data: boxesToJSON(boxes),
 		dataType: "text",
 		success: function( data ) {
-		    $("#status").text("got overview rectangle. "+data.length+" points returned.");
+		    var points = ( $.parseJSON( data ) ).points;
+		    console.log( points );
+
+		    $("#status").text("got overview rectangle. "+points.length+" points returned.");
 
 		    // Draw boxes
 		    drawBoxes( boxes );
 
 		    // Display markers that fit within the union of the boxes
 		    clearMarkers();
-		    for ( var i=0; i<data.length; i++ ) {
-			displayPoint( new google.maps.LatLng(data[i][0], data[i][1]) );
+		    for ( var i=0; i<points.length; i++ ) {
+			displayPoint( new google.maps.LatLng(points[i][0], points[i][1]) );
 		    }
 		}
 	    } );
