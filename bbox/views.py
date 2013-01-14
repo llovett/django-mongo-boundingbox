@@ -19,15 +19,16 @@ def searchPoints( request ):
     for i in xrange(0,len(rectangles),4):
         # Make a Rectangle out of the width/height of a bounding box
         # longitude = x, latitude = y
-        theRect = Rectangle( abs(rectangles[i+1] - rectangles[i+3]),
-                             abs(rectangles[i] - rectangles[i+2]) )
-        theRect.shift( rectangles[i+3], rectangles[i+2] )
+        theRect = Rectangle( abs(rectangles[i] - rectangles[i+2]),
+                             abs(rectangles[i+1] - rectangles[i+3]) )
+        theRect.shift( rectangles[i+2], rectangles[i+3] )
         bboxArea = bboxArea + theRect if bboxArea else theRect
 
-    bboxArea = bboxArea.contour( 0 )
+    bboxArea = [list(t) for t in bboxArea.contour( 0 )]
     stderr.write( str(bboxArea) )
 
     # TODO: pull objects out of database using bboxArea
     points = [p.position for p in Point.objects( position__within_polygon=bboxArea )]
+    stderr.write("points returned: "+str(points))
     
     return HttpResponse( json.dumps(points), mimetype="application/json" )

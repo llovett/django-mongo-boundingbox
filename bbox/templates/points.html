@@ -24,13 +24,15 @@ function initialize() {
 	event.preventDefault();
 	route();
     } );
+    $("#clear").click( function( event ) {
+	event.preventDefault();
+	clearBoxes();
+    } );
 
     // Setup directions/boxing utilities
     directionService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer( {map: map} );
     routeBoxer = new RouteBoxer();
-
-    redraw();
 }
 
 function addPoint( mouseEvent ) {
@@ -72,30 +74,6 @@ function clearBoxes() {
     routeBoxes = null;
 }
 
-function redraw() {
-    var latLngBounds = new google.maps.LatLngBounds(
-	endPoint1.getPosition(),
-	endPoint2.getPosition()
-    );
-    rectangle.setBounds( latLngBounds );
-
-    $.ajax( {
-	type: "GET",
-	url: "/point/search/",
-	data: { 'lat1': endPoint1.getPosition().lat(),
-		'lng1': endPoint1.getPosition().lng(),
-		'lat2': endPoint2.getPosition().lat(),
-		'lng2': endPoint2.getPosition().lng() },
-	success: function( data ) {
-	    clearMarkers();
-	    for ( var i=0; i<data.length; i++ ) {
-		displayPoint( new google.maps.LatLng(data[i][0], data[i][1]) );
-	    }
-	}
-    } );
-	    
-}
-
 function route() {
     // Clear all previous boxes
     clearBoxes();
@@ -128,7 +106,7 @@ function route() {
 		data: boxesToJSON(boxes),
 		dataType: "text",
 		success: function( data ) {
-		    $("#status").text("got overview rectangle.");
+		    $("#status").text("got overview rectangle. "+data.length+" points returned.");
 
 		    // Draw boxes
 		    drawBoxes( boxes );
@@ -218,6 +196,7 @@ of the route<br />
     from <input type="text" id="from" value="Denver" /> to
     <input type="text" id="to" value="San Francisco" />
     <input type="submit" value="submit" id="submit" />
+    <input type="button" value="clear" id="clear" />
   </form>
 </div>
 <div id="status">
