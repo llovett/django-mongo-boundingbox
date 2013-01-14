@@ -2,7 +2,6 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from bbox.models import Point
 import json
-from sys import stderr
 from Polygon.Shapes import Rectangle
 
 def addPoint( request ):
